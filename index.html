@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 300px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        .resolveButton {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ticket Tracker</h1>
+        <input type="text" id="ticketIdInput" placeholder="Enter Ticket ID">
+        <button id="addButton">Add</button>
+        <ul id="ticketList"></ul>
+    </div>
+    <!-- Include Firebase SDK scripts via CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.5/firebase-firestore-compat.js"></script>
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+    apiKey: "AIzaSyDkR3vgthrF-UqkLQ--dDx9lVabBgJXnGs",
+    authDomain: "ticket-follower.firebaseapp.com",
+    projectId: "ticket-follower",
+    storageBucket: "ticket-follower.appspot.com",
+    messagingSenderId: "230964594360",
+    appId: "1:230964594360:web:c7283dda46e06762d6164d"
+  };
+
+        firebase.initializeApp(firebaseConfig);
+
+        const db = firebase.firestore();
+
+        const addButton = document.getElementById('addButton');
+        const ticketIdInput = document.getElementById('ticketIdInput');
+        const ticketList = document.getElementById('ticketList');
+
+        addButton.addEventListener('click', async function() {
+            const ticketId = ticketIdInput.value.trim();
+            if (ticketId !== '') {
+                try {
+                    await db.collection('tickets').add({
+                        ticketId: ticketId,
+                        resolved: false
+                    });
+                    ticketIdInput.value = '';
+                } catch (error) {
+                    console.error('Error adding ticket: ', error);
+                }
+            }
+        });
+
+        db.collection('tickets').onSnapshot(snapshot => {
+            ticketList.innerHTML = '';
+            snapshot.forEach(doc => {
+                const listItem = document.createElement('li');
+                listItem.textContent = doc.data().ticketId;
+
+                const resolveButton = document.createElement('button');
+                resolveButton.textContent = 'Resolve';
+                resolveButton.className = 'resolveButton';
+                resolveButton.addEventListener('click', async () => {
+                    try {
+                        await db.collection('tickets').doc(doc.id).delete();
+                    } catch (error) {
+                        console.error('Error resolving ticket: ', error);
+                    }
+                });
+
+                listItem.appendChild(resolveButton);
+                ticketList.appendChild(listItem);
+            });
+        });
+    </script>
+</body>
+</html>
